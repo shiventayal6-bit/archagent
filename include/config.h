@@ -1,5 +1,5 @@
-// Created by st3125 on 2026/6/11
-// ArchAgent IDE - Configuration structure
+// ArchAgent — CLI configuration
+// All runtime parameters parsed from argv, with documented defaults.
 
 #ifndef ARCHAGENT_CONFIG_H
 #define ARCHAGENT_CONFIG_H

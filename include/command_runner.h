@@ -1,5 +1,6 @@
-// Created by st3125 on 2026/6/11
-// ArchAgent IDE - Command runner
+// ArchAgent — Command runner
+// Executes shell commands inside a sandbox with allowlist validation,
+// timeout enforcement, and separate stdout/stderr capture.
 
 #ifndef ARCHAGENT_COMMAND_RUNNER_H
 #define ARCHAGENT_COMMAND_RUNNER_H

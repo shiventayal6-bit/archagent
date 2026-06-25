@@ -1,5 +1,6 @@
-// ArchAgent IDE - C-to-A64 Playground: lexer
-// Tokenises a small C-Mini subset into a token stream.
+// ArchAgent — C-Mini lexer
+// Hand-written tokeniser for C-Mini, the minimal C subset compiled by the
+// C-to-A64 Playground. Tracks line/column for precise error reporting.
 
 #ifndef ARCHAGENT_C2ASM_LEXER_H
 #define ARCHAGENT_C2ASM_LEXER_H

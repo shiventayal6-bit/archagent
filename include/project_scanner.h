@@ -1,5 +1,6 @@
-// Created by st3125 on 2026/6/11
-// ArchAgent IDE - Project scanner
+// ArchAgent — Project scanner
+// Recursively discovers source files, headers, Makefiles and tests
+// under a project root, populating a ProjectIndex for context selection.
 
 #ifndef ARCHAGENT_PROJECT_SCANNER_H
 #define ARCHAGENT_PROJECT_SCANNER_H
@@ -7,7 +8,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <limits.h>
-#include <linux/limits.h>
 
 // information about one file in the project
 typedef struct {

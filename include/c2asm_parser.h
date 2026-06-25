@@ -1,5 +1,7 @@
-// ArchAgent IDE - C-to-A64 Playground: parser
-// Recursive descent parser producing an AST from the token stream.
+// ArchAgent — C-Mini parser
+// Recursive-descent parser that produces an AST from the C-Mini token stream.
+// Supports declarations, assignments, arithmetic, comparisons, if/else,
+// while loops, blocks, and return statements.
 
 #ifndef ARCHAGENT_C2ASM_PARSER_H
 #define ARCHAGENT_C2ASM_PARSER_H

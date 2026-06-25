@@ -1,4 +1,8 @@
-// Created by sm4925 on 2026/6/14
+// ArchAgent — Ollama backend
+// Calls the Ollama HTTP API (POST /api/generate) to run local models.
+// Parses the JSONL streaming response; handles connection refused,
+// HTTP errors, and timeouts with descriptive error messages.
+// Default model: ARCHAGENT_DEFAULT_OLLAMA_MODEL.
 
 #ifndef ARCHAGENT_OLLAMA_BACKEND_H
 #define ARCHAGENT_OLLAMA_BACKEND_H
@@ -14,4 +18,4 @@ bool ollama_backend_generate(const char *prompt,
                              int timeout_seconds,
                              ModelResponse *out);
 
-#endif
+#endif // ARCHAGENT_OLLAMA_BACKEND_H

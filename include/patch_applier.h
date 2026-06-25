@@ -1,5 +1,7 @@
-// Created by st3125 on 2026/6/11
-// ArchAgent IDE - Patch applier
+// ArchAgent — Patch applier
+// Applies a parsed unified diff to files inside a sandbox directory.
+// Uses fuzzy context-line matching to tolerate minor whitespace drift
+// or off-by-one line numbers from the model.
 
 #ifndef ARCHAGENT_PATCH_APPLIER_H
 #define ARCHAGENT_PATCH_APPLIER_H

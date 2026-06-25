@@ -1,5 +1,6 @@
-// Created by st3125 on 2026/6/11
-// ArchAgent IDE - Mock backend
+// ArchAgent — Mock LLM backend
+// Returns pre-canned responses keyed on keywords in the request.
+// Requires no external dependencies; used for demos, tests, and CI.
 
 #ifndef ARCHAGENT_MOCK_BACKEND_H
 #define ARCHAGENT_MOCK_BACKEND_H

@@ -1,5 +1,6 @@
-// Created by st3125 on 2026/6/11
-// ArchAgent IDE - Target profile generation
+// ArchAgent — Target profile
+// Fingerprints the host environment (OS, compiler, architecture)
+// to seed the model prompt with platform-specific context.
 
 #ifndef ARCHAGENT_TARGET_PROFILE_H
 #define ARCHAGENT_TARGET_PROFILE_H

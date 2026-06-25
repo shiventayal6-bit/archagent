@@ -1,5 +1,7 @@
-// Created by st3125 on 2026/6/11
-// ArchAgent IDE- Unified diff parser
+// ArchAgent — Unified diff parser
+// Parses unified diff text into a structured representation
+// (ParsedDiff → FilePatch → DiffHunk → DiffLine) suitable for validation
+// and fuzzy application.
 
 #ifndef ARCHAGENT_DIFF_PARSER_H
 #define ARCHAGENT_DIFF_PARSER_H

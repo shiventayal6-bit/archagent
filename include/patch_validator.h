@@ -1,5 +1,7 @@
-// Created by st3125 on 2026/6/11
-// ArchAgent IDE - Patch validator
+// ArchAgent — Patch validator
+// Checks a parsed diff for safety before any files are written.
+// Rejects directory traversal (../), absolute paths, and writes
+// outside the project root.
 
 #ifndef ARCHAGENT_PATCH_VALIDATOR_H
 #define ARCHAGENT_PATCH_VALIDATOR_H

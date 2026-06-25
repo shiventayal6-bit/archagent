@@ -1,5 +1,7 @@
-// Created by st3125 on 2026/6/14
-// ArchAgent IDE - llama.cpp backend
+// ArchAgent — llama.cpp backend
+// Spawns a llama-cli subprocess to run local GGUF models.
+// Returns exit code 127 if llama-cli is not on PATH; exit code 2 if the
+// model path is missing. Never crashes or hangs on missing dependencies.
 
 #ifndef ARCHAGENT_LLAMA_BACKEND_H
 #define ARCHAGENT_LLAMA_BACKEND_H

@@ -1,5 +1,6 @@
-// Created by st3125 on 2026/6/11
-// ArchAgent IDE - Response parser
+// ArchAgent — Response parser
+// Extracts three delimited sections from a model response:
+// <PLAN> (explanation), <PATCH> (unified diff), <TESTS> (verification commands).
 
 #ifndef ARCHAGENT_RESPONSE_PARSER_H
 #define ARCHAGENT_RESPONSE_PARSER_H

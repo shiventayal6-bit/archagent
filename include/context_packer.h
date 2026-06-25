@@ -1,5 +1,6 @@
-// Created by st3125 on 2026/6/11
-// ArchAgent IDE - Context packer
+// ArchAgent — Context packer
+// Selects the most relevant project files for the model prompt,
+// respecting a configurable byte budget (default 30 KB).
 
 #ifndef ARCHAGENT_CONTEXT_PACKER_H
 #define ARCHAGENT_CONTEXT_PACKER_H

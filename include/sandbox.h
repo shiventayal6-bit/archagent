@@ -1,5 +1,6 @@
-// Created by st3125 on 2026/6/11
-// ArchAgent IDE - Sandbox manager
+// ArchAgent — Sandbox manager
+// Creates an isolated session directory and copies the project into it.
+// Session IDs are "YYYYMMDD_HHMMSS_<pid>" to prevent collisions.
 
 #ifndef ARCHAGENT_SANDBOX_H
 #define ARCHAGENT_SANDBOX_H

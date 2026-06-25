@@ -1,5 +1,6 @@
-// Created by st3125 on 2026/6/11
-// ArchAgent IDE - Prompt builder
+// ArchAgent — Prompt builder
+// Assembles the final model prompt from three components:
+// host target profile, packed project context, and the user's request.
 
 #ifndef ARCHAGENT_PROMPT_BUILDER_H
 #define ARCHAGENT_PROMPT_BUILDER_H

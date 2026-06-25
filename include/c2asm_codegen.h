@@ -1,5 +1,7 @@
-// ArchAgent IDE - C-to-A64 Playground: code generator
-// Lowers the AST to A64 assembly text accepted by the coursework assembler.
+// ArchAgent — C-Mini code generator
+// Lowers a C-Mini AST to ARMv8 A64 assembly text.
+// Variables map to X1–X15; temporaries use X16–X25.
+// Generates unique labels for if/else and while control flow.
 
 #ifndef ARCHAGENT_C2ASM_CODEGEN_H
 #define ARCHAGENT_C2ASM_CODEGEN_H

@@ -1,5 +1,5 @@
-// Created by st3125 on 2026/6/11
-// ArchAgent IDE - Audit logger
+// ArchAgent — Audit logger
+// Writes per-session artefacts and a JSONL event log to the session directory.
 
 #ifndef ARCHAGENT_AUDIT_LOGGER_H
 #define ARCHAGENT_AUDIT_LOGGER_H
