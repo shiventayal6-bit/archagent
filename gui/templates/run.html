@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if result.get('ok') %}Run completed{% else %}Run reported a problem{% endif %} — ArchAgent IDE
+{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('index') }}">Home</a>
+    <span class="breadcrumb-sep">/</span>
+    {% if project_path %}
+    <a href="{{ url_for('project', path=project_path) }}">{{ project_display_path }}</a>
+    <span class="breadcrumb-sep">/</span>
+    {% endif %}
+    <span>Run Result</span>
+</div>
+
+<section class="page-header">
+    <p class="eyebrow">Run Result</p>
+    <h1>
+        {% if result.get('ok') %}Agent completed successfully{% else %}Agent reported a problem{% endif %}
+    </h1>
+    {% if project_display_path %}
+    <p class="muted">{{ project_display_path }}</p>
+    {% endif %}
+</section>
+
+<!-- Summary panel -->
+<section class="panel">
+    <div class="status-header">
+        <div>
+            <h2>Summary</h2>
+            <p>{{ result.get('summary') or "No summary was returned." }}</p>
+        </div>
+        {% if result.get('ok') %}
+        <span class="status-pill status-pass">✓ Passed</span>
+        {% else %}
+        <span class="status-pill status-fail">✗ Check needed</span>
+        {% endif %}
+    </div>
+
+    {% set build = result.get('build') or {} %}
+    {% set tests = result.get('tests') or {} %}
+    {% set bench = result.get('benchmark') or {} %}
+
+    <div class="result-grid">
+        <div class="result-item result-item-neutral">
+            <span class="result-label">Backend</span>
+            <span class="result-value">{{ backend or result.get('backend') or "unknown" }}</span>
+        </div>
+
+        {% if result.get('patch_validated') is sameas true %}
+        <div class="result-item result-item-pass">
+            <span class="result-label">Patch validated</span>
+            <span class="result-value result-value-pass">PASS</span>
+        </div>
+        {% elif result.get('patch_validated') is sameas false %}
+        <div class="result-item result-item-fail">
+            <span class="result-label">Patch validated</span>
+            <span class="result-value result-value-fail">FAIL</span>
+        </div>
+        {% else %}
+        <div class="result-item result-item-neutral">
+            <span class="result-label">Patch validated</span>
+            <span class="result-value result-value-neutral">—</span>
+        </div>
+        {% endif %}
+
+        {% if result.get('sandbox_created') is sameas true %}
+        <div class="result-item result-item-pass">
+            <span class="result-label">Sandbox</span>
+            <span class="result-value result-value-pass">Created</span>
+        </div>
+        {% else %}
+        <div class="result-item result-item-neutral">
+            <span class="result-label">Sandbox</span>
+            <span class="result-value result-value-neutral">Not created</span>
+        </div>
+        {% endif %}
+
+        {% if build.get('passed') %}
+        <div class="result-item result-item-pass">
+            <span class="result-label">Build</span>
+            <span class="result-value result-value-pass">PASS</span>
+        </div>
+        {% elif build.get('ran') %}
+        <div class="result-item result-item-fail">
+            <span class="result-label">Build</span>
+            <span class="result-value result-value-fail">FAIL</span>
+        </div>
+        {% else %}
+        <div class="result-item result-item-neutral">
+            <span class="result-label">Build</span>
+            <span class="result-value result-value-neutral">Not run</span>
+        </div>
+        {% endif %}
+
+        {% if tests.get('passed') %}
+        <div class="result-item result-item-pass">
+            <span class="result-label">Tests</span>
+            <span class="result-value result-value-pass">PASS</span>
+        </div>
+        {% elif tests.get('ran') %}
+        <div class="result-item result-item-fail">
+            <span class="result-label">Tests</span>
+            <span class="result-value result-value-fail">FAIL</span>
+        </div>
+        {% else %}
+        <div class="result-item result-item-neutral">
+            <span class="result-label">Tests</span>
+            <span class="result-value result-value-neutral">Not run</span>
+        </div>
+        {% endif %}
+
+        {% if bench.get('ran') %}
+        <div class="result-item result-item-neutral">
+            <span class="result-label">Benchmark</span>
+            <span class="result-value">Ran</span>
+        </div>
+        {% else %}
+        <div class="result-item result-item-neutral">
+            <span class="result-label">Benchmark</span>
+            <span class="result-value result-value-neutral">Not run</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="form-actions" style="margin-top:18px">
+        {% if session_link %}
+        <a class="button button-primary" href="{{ session_link }}">Open Session Logs</a>
+        {% endif %}
+        {% if project_path %}
+        <a class="button button-secondary"
+           href="{{ url_for('project', path=project_path, request=request_text) }}">
+            Back to Project
+        </a>
+        {% endif %}
+        <a class="button button-secondary" href="{{ url_for('index') }}">Home</a>
+    </div>
+</section>
+
+{% if json_error %}
+<div class="alert alert-error">{{ json_error }}</div>
+{% endif %}
+
+<!-- Command -->
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <h2>Executed command</h2>
+            <p>Launched as a subprocess argument list — no shell interpolation.</p>
+        </div>
+        <button class="button button-secondary button-sm" type="button" data-copy-target="cmd-out">Copy</button>
+    </div>
+    <div class="code-wrap">
+        <div class="code-head"><span class="code-label">argv</span></div>
+        <pre id="cmd-out" class="code-block">{{ command_display }}</pre>
+    </div>
+</section>
+
+<!-- stdout / stderr -->
+{% if outcome.stdout or outcome.stderr %}
+<div class="grid grid-2">
+    {% if outcome.stdout %}
+    <section class="panel">
+        <div class="panel-header">
+            <h2>stdout</h2>
+            <button class="button button-secondary button-sm" type="button" data-copy-target="stdout-out">Copy</button>
+        </div>
+        <div class="code-wrap">
+            <div class="code-head"><span class="code-label">stdout</span></div>
+            <pre id="stdout-out" class="code-block">{{ outcome.stdout }}</pre>
+        </div>
+    </section>
+    {% endif %}
+
+    {% if outcome.stderr %}
+    <section class="panel">
+        <div class="panel-header">
+            <h2>stderr</h2>
+            <button class="button button-secondary button-sm" type="button" data-copy-target="stderr-out">Copy</button>
+        </div>
+        <div class="code-wrap">
+            <div class="code-head"><span class="code-label">stderr</span></div>
+            <pre id="stderr-out" class="code-block">{{ outcome.stderr }}</pre>
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

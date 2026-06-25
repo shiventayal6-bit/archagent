@@ -1,0 +1,426 @@
+{% extends "base.html" %}
+
+{% block title %}C Playground — ArchAgent IDE{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('index') }}">Home</a>
+    <span class="breadcrumb-sep">/</span>
+    <span>C Playground</span>
+</div>
+
+<section class="page-header">
+    <p class="eyebrow">C Playground</p>
+    <h1>Write C, run it instantly</h1>
+    <p class="muted">
+        Two modes: <strong>C-Mini → A64</strong> compiles a simple subset to ARM assembly and
+        emulates it via the coursework toolchain.
+        <strong>Standard C</strong> compiles any C program with gcc and shows the output directly.
+    </p>
+</section>
+
+<!-- ── Mode tab strip ──────────────────────────────────────────────────── -->
+<div class="tab-strip" role="tablist" id="mode-tabs">
+    <button class="tab-btn" role="tab"
+            aria-selected="{{ 'false' if mode == 'c' else 'true' }}"
+            aria-controls="panel-cmini">
+        C-Mini → A64
+    </button>
+    <button class="tab-btn" role="tab"
+            aria-selected="{{ 'true' if mode == 'c' else 'false' }}"
+            aria-controls="panel-c">
+        Standard C <span style="font-size:0.75em;opacity:0.7">(gcc)</span>
+    </button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     Panel 1: C-Mini → A64
+═══════════════════════════════════════════════════════════════════════ -->
+<div id="panel-cmini" class="tab-panel">
+<div class="grid grid-2" style="align-items:start">
+
+    <!-- Source editor -->
+    <section class="panel">
+        <div class="panel-header"><h2>Source</h2></div>
+
+        <div class="quick-requests" style="margin-bottom:14px">
+            {% for key, ex in examples.items() %}
+            <button class="chip" type="button" data-fill-source="{{ ex.source }}">
+                {{ ex.name }}
+            </button>
+            {% endfor %}
+        </div>
+
+        <form id="c2asm-run-form" class="agent-form" method="post" action="{{ url_for('c2asm_run') }}">
+            <label class="field">
+                <span>C-Mini source</span>
+                <textarea class="source-editor" name="source"
+                          rows="16" maxlength="65536" required
+                          placeholder="int n = 5;&#10;int r = 1;&#10;while (n > 1) {&#10;    r = r * n;&#10;    n = n - 1;&#10;}&#10;return r;">{{ prefill_source }}</textarea>
+            </label>
+
+            <label class="checkbox-row">
+                <input type="checkbox" name="emit_asm_only" id="emit-asm-only">
+                <span>Emit assembly only — skip assemble and emulate.</span>
+            </label>
+
+            <button class="adv-toggle" type="button"
+                    aria-expanded="false" aria-controls="c2asm-adv">
+                ⚙ Advanced options <span class="arrow">▼</span>
+            </button>
+            <div class="adv-body" id="c2asm-adv">
+                <div class="form-grid">
+                    <label class="field">
+                        <span>Assembler binary</span>
+                        <input type="text" name="assemble_bin"
+                               value="{{ defaults.assemble_bin }}"
+                               placeholder="auto-detect (../../src/assemble)">
+                    </label>
+                    <label class="field">
+                        <span>Emulator binary</span>
+                        <input type="text" name="emulate_bin"
+                               value="{{ defaults.emulate_bin }}"
+                               placeholder="auto-detect (../../src/emulate)">
+                    </label>
+                    <label class="field">
+                        <span>Timeout (s)</span>
+                        <input type="number" name="timeout" min="5" max="120"
+                               value="{{ defaults.timeout }}" required>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button class="button button-primary" type="submit">Compile and Run</button>
+            </div>
+        </form>
+
+        <details class="details-box" style="margin-top:16px">
+            <summary>C-Mini language reference</summary>
+            <div style="padding:4px 16px 14px;color:var(--muted);font-size:0.86rem;line-height:1.7">
+                <p style="margin:10px 0 4px"><strong style="color:var(--text)">Types</strong></p>
+                <p style="margin:0"><code>int</code> — 64-bit integer. Only type supported.</p>
+                <p style="margin:10px 0 4px"><strong style="color:var(--text)">Operators</strong></p>
+                <p style="margin:0"><code>+ - *</code> arithmetic · <code>== != &lt; &lt;= &gt; &gt;=</code> comparison. No division.</p>
+                <p style="margin:10px 0 4px"><strong style="color:var(--text)">Statements</strong></p>
+                <ul style="margin:0;padding-left:18px">
+                    <li><code>int x = expr;</code> — declaration</li>
+                    <li><code>x = expr;</code> — assignment</li>
+                    <li><code>if (cond) { … } else { … }</code></li>
+                    <li><code>while (cond) { … }</code></li>
+                    <li><code>return expr;</code> — result in X00</li>
+                </ul>
+                <p style="margin:10px 0 4px"><strong style="color:var(--text)">Registers</strong></p>
+                <p style="margin:0">Variables: <code>x1–x15</code> · Temps: <code>x16–x25</code> · Return: <code>x0</code></p>
+            </div>
+        </details>
+    </section>
+
+    <!-- C-Mini result -->
+    <div>
+    {% if result is defined and result %}
+        {% if result.get('ok') %}
+            {% if result.get('return_value_available') %}
+            <div class="return-val-card">
+                <span class="return-val-label">Return value (X00)</span>
+                <span class="return-val-number">{{ result.get('return_value') }}</span>
+                <span class="return-val-hex">{{ result.get('return_value_hex') or '' }}</span>
+            </div>
+            {% else %}
+            <div class="alert alert-success">Assembly generated. Emulation skipped.</div>
+            {% endif %}
+
+            <section class="panel">
+                <div class="tab-strip" role="tablist">
+                    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-asm">Assembly</button>
+                    {% if result.get('emulator_output') %}
+                    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-emu">Emulator</button>
+                    {% endif %}
+                    {% if result.get('session_dir') %}
+                    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-sess">Session</button>
+                    {% endif %}
+                </div>
+
+                <div id="tab-asm" class="tab-panel">
+                    {% if result.get('generated_assembly') %}
+                    <div class="code-wrap">
+                        <div class="code-head">
+                            <span class="code-label">generated.s</span>
+                            <button class="button button-sm" type="button" data-copy-target="asm-out">Copy</button>
+                        </div>
+                        <pre id="asm-out" class="code-block">{{ result.get('generated_assembly') }}</pre>
+                    </div>
+                    {% else %}
+                    <p class="empty-state">No assembly generated.</p>
+                    {% endif %}
+                </div>
+
+                {% if result.get('emulator_output') %}
+                <div id="tab-emu" class="tab-panel">
+                    <div class="code-wrap">
+                        <div class="code-head">
+                            <span class="code-label">emulator output</span>
+                            <button class="button button-sm" type="button" data-copy-target="emu-out">Copy</button>
+                        </div>
+                        <pre id="emu-out" class="code-block">{{ result.get('emulator_output') }}</pre>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if result.get('session_dir') %}
+                <div id="tab-sess" class="tab-panel">
+                    <ul style="list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:0.84rem">
+                        {% for key, val in [
+                            ('Session dir', result.get('session_dir')),
+                            ('Input',       result.get('input_path')),
+                            ('Assembly',    result.get('assembly_path')),
+                            ('Binary',      result.get('binary_path')),
+                            ('Emu output',  result.get('emulator_output_path')),
+                            ('Result JSON', result.get('result_json_path')),
+                        ] %}
+                        {% if val %}
+                        <li><span class="result-label">{{ key }}</span><code>{{ val }}</code></li>
+                        {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </section>
+
+        {% else %}
+        <section class="panel">
+            <div class="status-header">
+                <div>
+                    <h2>Error {% if result.get('stage') %}<span class="stage-badge">{{ result.get('stage') }}</span>{% endif %}</h2>
+                    <p>{{ result.get('error') or 'An error occurred.' }}</p>
+                </div>
+                <span class="status-pill status-fail">✗ Failed</span>
+            </div>
+            {% if result.get('generated_assembly') %}
+            <div class="code-wrap" style="margin-top:12px">
+                <div class="code-head">
+                    <span class="code-label">generated.s (before error)</span>
+                    <button class="button button-sm" type="button" data-copy-target="err-asm">Copy</button>
+                </div>
+                <pre id="err-asm" class="code-block">{{ result.get('generated_assembly') }}</pre>
+            </div>
+            {% endif %}
+        </section>
+        {% endif %}
+
+        {% if outcome is defined and outcome and outcome.stderr %}
+        <section class="panel" style="margin-top:0">
+            <div class="panel-header">
+                <h2>Engine stderr</h2>
+                <button class="button button-secondary button-sm" type="button" data-copy-target="cmini-stderr">Copy</button>
+            </div>
+            <div class="code-wrap">
+                <div class="code-head"><span class="code-label">stderr</span></div>
+                <pre id="cmini-stderr" class="code-block">{{ outcome.stderr }}</pre>
+            </div>
+        </section>
+        {% endif %}
+
+    {% else %}
+    <section class="panel" style="text-align:center;padding:40px 24px">
+        <div style="font-size:2.5rem;margin-bottom:14px">⚙</div>
+        <h2>C-Mini → A64</h2>
+        <p>Pick an example or write your own, then click <strong>Compile and Run</strong>.</p>
+        <div style="margin-top:18px;display:grid;gap:8px;text-align:left;font-size:0.86rem;color:var(--muted);max-width:320px;margin-inline:auto">
+            <div>✓ int, arithmetic, if/else, while, return</div>
+            <div>✓ Generates real A64 assembly</div>
+            <div>✓ Assembles and emulates on coursework toolchain</div>
+            <div>✓ Return value read from X00</div>
+            <div>✗ No printf, no division, no arrays</div>
+        </div>
+    </section>
+    {% endif %}
+    </div>
+
+</div><!-- end grid -->
+</div><!-- end panel-cmini -->
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     Panel 2: Standard C (gcc)
+═══════════════════════════════════════════════════════════════════════ -->
+<div id="panel-c" class="tab-panel">
+
+{% if not gcc_available %}
+<div class="alert alert-error">
+    <strong>gcc not found.</strong> Install gcc to use the Standard C runner.
+    On Ubuntu/Debian: <code>sudo apt install gcc</code>
+</div>
+{% endif %}
+
+<div class="grid grid-2" style="align-items:start">
+
+    <!-- Source editor -->
+    <section class="panel">
+        <div class="panel-header"><h2>Source</h2></div>
+
+        <div class="quick-requests" style="margin-bottom:14px">
+            {% for key, ex in c_examples.items() %}
+            <button class="chip" type="button" data-fill-source="{{ ex.source }}">
+                {{ ex.name }}
+            </button>
+            {% endfor %}
+        </div>
+
+        <form id="crun-form" class="agent-form" method="post" action="{{ url_for('c2asm_crun') }}">
+            <label class="field">
+                <span>C source</span>
+                <textarea class="source-editor" name="source"
+                          rows="16" maxlength="131072" required
+                          placeholder="#include &lt;stdio.h&gt;&#10;&#10;int main() {&#10;    printf(&quot;Hello, World!\n&quot;);&#10;    return 0;&#10;}">{{ prefill_c_source }}</textarea>
+            </label>
+
+            <button class="adv-toggle" type="button"
+                    aria-expanded="false" aria-controls="crun-adv">
+                ⚙ Options <span class="arrow">▼</span>
+            </button>
+            <div class="adv-body" id="crun-adv">
+                <label class="field">
+                    <span>Timeout (s)</span>
+                    <input type="number" name="timeout" min="2" max="60"
+                           value="{{ defaults.c_timeout }}" required>
+                </label>
+            </div>
+
+            <div class="form-actions">
+                <button class="button button-primary" type="submit"
+                        {% if not gcc_available %}disabled{% endif %}>
+                    Compile and Run
+                </button>
+            </div>
+        </form>
+
+        <details class="details-box" style="margin-top:16px">
+            <summary>What's supported</summary>
+            <div style="padding:4px 16px 14px;color:var(--muted);font-size:0.86rem;line-height:1.7">
+                <p style="margin:8px 0 4px">Compiled with:</p>
+                <p style="margin:0"><code>gcc -O1 -std=c17 -Wall -Wextra</code></p>
+                <p style="margin:10px 0 4px">Full standard library — <code>stdio.h</code>, <code>stdlib.h</code>,
+                <code>string.h</code>, <code>math.h</code>, etc. All operators including <code>/</code> and <code>%</code>.
+                Program stdout and stderr are captured and displayed.</p>
+                <p style="margin:10px 0 4px"><strong style="color:var(--text)">Tip</strong></p>
+                <p style="margin:0">Programs that run longer than the timeout are killed automatically.</p>
+            </div>
+        </details>
+    </section>
+
+    <!-- Standard C result -->
+    <div>
+    {% if crun_result is defined and crun_result %}
+        {% if crun_result.get('ok') %}
+        <!-- Success -->
+        <section class="panel">
+            <div class="status-header">
+                <div>
+                    <h2>Output</h2>
+                    <p>Program exited with code <strong>{{ crun_result.get('returncode', 0) }}</strong>.</p>
+                </div>
+                <span class="status-pill status-pass">✓ OK</span>
+            </div>
+
+            {% if crun_result.get('stdout') %}
+            <div class="code-wrap">
+                <div class="code-head">
+                    <span class="code-label">stdout</span>
+                    <button class="button button-sm" type="button" data-copy-target="crun-stdout">Copy</button>
+                </div>
+                <pre id="crun-stdout" class="code-block">{{ crun_result.get('stdout') }}</pre>
+            </div>
+            {% else %}
+            <p class="empty-state">Program produced no stdout output.</p>
+            {% endif %}
+
+            {% if crun_result.get('stderr') %}
+            <div class="code-wrap" style="margin-top:12px">
+                <div class="code-head"><span class="code-label">stderr</span></div>
+                <pre class="code-block">{{ crun_result.get('stderr') }}</pre>
+            </div>
+            {% endif %}
+        </section>
+
+        {% elif crun_result.get('stage') == 'compile' %}
+        <!-- Compile error -->
+        <section class="panel">
+            <div class="status-header">
+                <div>
+                    <h2>Compile error <span class="stage-badge">gcc</span></h2>
+                    {% if crun_result.get('error') %}
+                    <p>{{ crun_result.get('error') }}</p>
+                    {% else %}
+                    <p>gcc returned a non-zero exit code.</p>
+                    {% endif %}
+                </div>
+                <span class="status-pill status-fail">✗ Error</span>
+            </div>
+
+            {% if crun_result.get('compile_stderr') %}
+            <div class="code-wrap">
+                <div class="code-head">
+                    <span class="code-label">gcc output</span>
+                    <button class="button button-sm" type="button" data-copy-target="gcc-err">Copy</button>
+                </div>
+                <pre id="gcc-err" class="code-block">{{ crun_result.get('compile_stderr') }}</pre>
+            </div>
+            {% endif %}
+        </section>
+
+        {% else %}
+        <!-- Runtime error -->
+        <section class="panel">
+            <div class="status-header">
+                <div>
+                    <h2>Runtime error <span class="stage-badge">run</span></h2>
+                    {% if crun_result.get('error') %}
+                    <p>{{ crun_result.get('error') }}</p>
+                    {% elif crun_result.get('returncode') is not none %}
+                    <p>Program exited with code <strong>{{ crun_result.get('returncode') }}</strong>.</p>
+                    {% endif %}
+                </div>
+                {% if crun_result.get('timed_out') %}
+                <span class="status-pill status-fail">⏱ Timeout</span>
+                {% else %}
+                <span class="status-pill status-fail">✗ Failed</span>
+                {% endif %}
+            </div>
+
+            {% if crun_result.get('stdout') %}
+            <div class="code-wrap" style="margin-bottom:12px">
+                <div class="code-head"><span class="code-label">stdout (before exit)</span></div>
+                <pre class="code-block">{{ crun_result.get('stdout') }}</pre>
+            </div>
+            {% endif %}
+
+            {% if crun_result.get('stderr') %}
+            <div class="code-wrap">
+                <div class="code-head"><span class="code-label">stderr</span></div>
+                <pre class="code-block">{{ crun_result.get('stderr') }}</pre>
+            </div>
+            {% endif %}
+        </section>
+        {% endif %}
+
+    {% else %}
+    <section class="panel" style="text-align:center;padding:40px 24px">
+        <div style="font-size:2.5rem;margin-bottom:14px">🖥</div>
+        <h2>Standard C (gcc)</h2>
+        <p>Write any valid C program and click <strong>Compile and Run</strong> to see the output.</p>
+        <div style="margin-top:18px;display:grid;gap:8px;text-align:left;font-size:0.86rem;color:var(--muted);max-width:320px;margin-inline:auto">
+            <div>✓ Full C17 standard library</div>
+            <div>✓ printf, scanf, malloc, string.h, math.h…</div>
+            <div>✓ All operators including / and %</div>
+            <div>✓ Multiple functions, structs, pointers</div>
+            <div>✓ Compiled with gcc -O1 -std=c17 -Wall</div>
+        </div>
+    </section>
+    {% endif %}
+    </div>
+
+</div><!-- end grid -->
+</div><!-- end panel-c -->
+
+{% endblock %}

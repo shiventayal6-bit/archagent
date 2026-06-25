@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>{% block title %}{{ app_name }}{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="ArchAgent IDE: local agentic coding interface for the COMP40009 ARMv8 extension.">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+    <script defer src="{{ url_for('static', filename='js/app.js') }}"></script>
+</head>
+<body>
+<div class="app-shell">
+
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-mark">A</div>
+            <div>
+                <div class="brand-title">ArchAgent IDE</div>
+                <div class="brand-subtitle">Local C Agent Interface</div>
+            </div>
+        </div>
+
+        <nav class="nav" aria-label="Main navigation">
+            <a class="nav-link" href="{{ url_for('index') }}">Home</a>
+            <a class="nav-link" href="{{ url_for('index', profile='1') }}">Target Profile</a>
+            <a class="nav-link" href="{{ url_for('c2asm_page') }}">
+                C-to-A64 Playground
+                <span class="nav-badge">NEW</span>
+            </a>
+
+            <div class="nav-section-title">Demo Projects</div>
+            {% for demo in demos %}
+            <a class="nav-link nav-link-small"
+               href="{{ url_for('project', path=demo.path, request=demo.default_request) }}">
+                {{ demo.name }}
+            </a>
+            {% endfor %}
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="sidebar-note">
+                <strong>C engine</strong>
+                <code title="{{ archagent_bin }}">{{ archagent_bin }}</code>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main">
+        {% if not archagent_bin_exists %}
+        <div class="alert alert-error">
+            <strong>C engine not found.</strong>
+            Build it first: <code>cd extension/archagent &amp;&amp; make</code> (from project root)
+        </div>
+        {% endif %}
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-stack">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+</div>
+</body>
+</html>

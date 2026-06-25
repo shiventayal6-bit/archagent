@@ -1,0 +1,9 @@
+// If/else example: return maximum of two values
+int a = 10;
+int b = 20;
+
+if (a < b) {
+    return b;
+} else {
+    return a;
+}

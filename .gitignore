@@ -1,0 +1,43 @@
+# Build outputs
+build/
+bin/
+
+# Object files and compiled binaries
+*.o
+*.a
+*.so
+*.dylib
+
+# Model weight files — never commit these
+*.gguf
+*.ggml
+*.bin
+
+# Session artefacts produced at runtime
+.archagent/
+demo_projects/*/.archagent/
+
+# Demo project build outputs
+demo_projects/calculator/calculator
+demo_projects/wordcount/test_wordcount
+demo_projects/matrix/bench_matrix
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# Editor artefacts
+*.swp
+*.swpx
+*~
+.DS_Store
+.idea/
+.vscode/
+*.kate-swp
+
+# Logs
+*.log
